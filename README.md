@@ -143,10 +143,120 @@ This is a baseline installation of a Linux server configured as a web and databa
    - Run `sudo apt-get install git`
    
 #### Step 6: Deploy the Item Catalog Project
-1. Create a new itemCatalog directory in /var/www/ by running `cd /var/www/` and then `sudo mkdir itemCatalog`. 
-2. Change to the itemCatalog directory (`cd itemCatalog`) and clone the item catalog project:
-   `sudo git clone https://github.com/DespoinaSakoglou/Item-Catalog-Project.git itemCatalog`
-3. Change back to /var/www/ (`cd ..`) and run `sudo chown -R ubuntu:ubuntu itemCatalog/` to change the ownership of the itemCatalog directory to `ubuntu`
+1. Clone the item catalog project and configure the database
+   - Create a new itemCatalog directory in /var/www/ by running `cd /var/www/` and then `sudo mkdir itemCatalog`. 
+   - Change to the itemCatalog directory (run `cd itemCatalog`) and clone the item catalog project:
+     `sudo git clone https://github.com/DespoinaSakoglou/Item-Catalog-Project.git itemCatalog`
+   - Change back to /var/www/ (run `cd ..`) and run `sudo chown -R ubuntu:ubuntu itemCatalog/` to change the ownership of the itemCatalog directory to `ubuntu`.
+   - Change to the  /var/www/itemCatalog/itemCatalog directory
+   - Run `mv application.py __init__.py` to rename the application.py file
+   - Run `nano __init__.py` to go into the `__init__.py` file.
+   - In `__init__.py`, find line 385: `app.run(host='0.0.0.0', port=8000)` and change it to: `app.run()`. Save and close the file.
+   - Run `nano database_setup.py` to go into the database_setup file.
+   - Find line 77: `engine = create_engine('sqlite:///HikingCatalog.db')` and change it to:
+     `engine = create_engine('postgresql://catalog:INSERT_PASSWORD_FOR_DATABASE_HERE@localhost/catalog')`
+     This way you can switch the database in the database_setup.py file from SQLite to PostgreSQL. (make sure to use the password you set for the PostgreSql catalog user, not the database catalog user - in case two different passwords were set)
+2. Add client_secrets.json to authenticate login with Google
+   - Create a new project on the [Google APIs Console](https://console.developers.google.com/apis)
+   - Choose **Credentials** on the left and create an **OAuth Client ID**. Configure the **consent screen** with an application name and support email, save and select **Web application** from the list of application types.
+   - Add http://XX.XX.XX.XX and http://ec2-XX-XX-XX-XX.compute-1.amazonaws.com as authorized JavaScript origins
+   - Google will provide a client ID and client secret for the project, accecible via a downloadable JSON file. Download the JSON file, and copy the contents in order to update the client_secrets.json file
+   - Run `nano client_secrets.json` in the /var/www/itemCatalog/itemCatalog/ directory to open the client_secrets.json file
+   - Delete the existing contents and paste the new contents that you copied from the downloaded JSON file. Save and close client_secrets.json file.
+   - Still in the /var/www/itemCatalog/itemCatalog project directory, run `cd templates` and then `nano login.html` to open the login.html file. Find line 21: `data-clientid="DISPLAYED-CURRENT-CLIENT-ID"` and replace the existing client id with the new one. Save and close the file.
+   - Back to the /var/www/itemCatalog/itemCatalog project directory, run `nano __init__.py` and change the path for the client_secrets.json file in lines 40 and 83 from `'client_secrets.json'` to `'/var/www/itemCatalog/itemCatalog/client_secrets.json'`.
+3. Set up the virtual environment:
+   - Go back to the home directory (run `cd ~/`)
+   - Install pip: run `sudo apt-get install python-pip`
+   - Install virtualenv: run `sudo apt-get install python-virtualenv`
+   - Change to the /var/www/itemCatalog/itemCatalog/ directory and create a temporary environment (choose a name for the environment; 'venv' is used in this configuration) by running `virtualenv venv` (_do not use `sudo` here_)
+   - Activate the new environment: run: `. venv/bin/activate`
+   - With the virtual environment active, install the following dependencies:
+     - `pip install httplib2`
+     - `pip install requests`
+     - `pip install --upgrade oauth2client`
+     - `pip install sqlalchemy`
+     - `pip install flask`
+     - `sudo apt-get install libpq-dev`
+     - `pip install psycopg2`
+     Note that sudo was used only when installing libpq-dev, because we want libpq-dev to be installed globally. All the other dependencies should be installed only in the virtual environment, not globally.
+   - Confirm that everything was installed correctly by running `python __init__.py`. You should see the application running: 
+     `* Running on http://127.0.0.1:5000/ (Press CTRL+C to quit)`
+   - Deactivate the virtual environment: run `deactivate`
+4. Set up a virtual host:
+   - Go back to the home directory (run `cd ~/`)
+   - Create a file in /etc/apache2/sites-available/ called itemCatalog.conf:
+     - Run `cd /etc/apache2/sites-available/`
+     - Run `sudo touch itemCatalog.conf`
+   - Open the file by running `sudo nano itemCatalog.conf` and add the following:
+     ```
+        <VirtualHost *:80>
+		                 ServerName XX.XX.XX.XX
+		                 ServerAdmin d.sakoglou@gmail.com
+		                 WSGIScriptAlias / /var/www/itemCatalog/itemCatalog.wsgi
+		                 <Directory /var/www/itemCatalog/itemCatalog/>
+			                      Order allow,deny
+			                      Allow from all
+			                      Options -Indexes
+		                 </Directory>
+		                 Alias /static /var/www/itemCatalog/itemCatalog/static
+		                 <Directory /var/www/itemCatalog/itemCatalog/static/>
+			                      Order allow,deny
+			                      Allow from all
+			                      Options -Indexes
+		                 </Directory>
+		                 ErrorLog ${APACHE_LOG_DIR}/error.log
+		                 LogLevel warn
+		                 CustomLog ${APACHE_LOG_DIR}/access.log combined
+        </VirtualHost>
+     ```
+     Save and close the file.
+   - Enable the virtual host: run `sudo a2ensite itemCatalog`. You should see the following:
+     ```
+        Enabling site itemCatalog.	
+        To activate the new configuration, you need to run:
+        service apache2 reload
+     ```
+   - Run `sudo service apache2 reload`
+5. Write a .wsgi file (Apache serves Flask applications by using a .wsgi file)
+   - Apache serves Flask applications by using a .wsgi file; create a file called nuevoMexico.wsgi in /var/www/nuevoMexico
+   - Go back to the home directory (run `cd ~/`)
+   - Create a file in /var/www/itemCatalog called itemCatalog.wsgi:
+     - Run `cd /var/www/itemCatalog/`
+     - Run `sudo touch itemCatalog.wsgi`
+   - Open the file by running `sudo nano itemCatalog.wsgi` and add the following:
+     ```
+        activate_this = '/var/www/itemCatalog/itemCatalog/venv/bin/activate_this.py'
+        execfile(activate_this, dict(__file__=activate_this))
+
+        #!/usr/bin/python
+        import sys
+        import logging
+        logging.basicConfig(stream=sys.stderr)
+        sys.path.insert(0,"/var/www/itemCatalog/")
+
+        from itemCatalog import app as application
+        application.secret_key = '12345'
+     ```
+   - Resart Apache: run `sudo service apache2 restart`
+6. Switch the database in the application from SQLite to PostgreSQL
+   - Change to the /var/www/itemCatalog/itemCatalog directory.
+   - Run `nano __init__.py` to go into the `__init__.py` file.
+   - In `__init__.py`, find line 46: `engine = create_engine('sqlite:///HikingCatalog.db')` and change it to: 
+     `engine = create_engine('postgresql://catalog:INSERT_PASSWORD_FOR_DATABASE_HERE@localhost/catalog')`. Save and close the file.
+   - Run `nano hikingitems.py` to go into the hikingitems.py file.
+   - Find line 10: `engine = create_engine('sqlite:///HikingCatalog.db')` and change it to:
+     `engine = create_engine('postgresql://catalog:INSERT_PASSWORD_FOR_DATABASE_HERE@localhost/catalog')`. Save and close the file.
+     Note: make sure to use the password you set for the PostgreSql catalog user, not the database catalog user.
+7. Disable the default Apache site
+   - Run: `sudo a2dissite 000-default.conf` . You should see the following:
+     ```
+        Site 000-default disabled.
+        To activate the new configuration, you need to run:
+           service apache2 reload
+     ```
+   - Run `sudo service apache2 reload`
+8. 
     
     
 
