@@ -121,7 +121,32 @@ This is a baseline installation of a Linux server configured as a web and databa
      ```
    - Run `\q` to exit psql
    - Run `exit` to switch back to the `ubuntu` user
-6. Create a new database user named `catalog` and a new PostgreSql datapase
+6. Create a new database user named `catalog` and a new PostgreSql database
+   - Create a new user: run `sudo adduser catalog`, enter password, and fill out name `catalog` (rest of information is optional)
+   - Give sudo permissions:
+     - Run `sudo visudo`
+     - Add `catalog ALL=(ALL:ALL) ALL` below lines `root ALL=(ALL:ALL) ALL` and `grader ALL=(ALL:ALL) ALL` and save and close the file.
+     - Run `sudo su - catalog` to swich to catalog user.
+     - Confirm `catalog` user has sudo permissions by running `sudo -l`. The following should appear:
+       ```
+          Matching Defaults entries for catalog on ip-172-26-14-7.ec2.internal:
+          env_reset, mail_badpass, 
+          secure_path=/usr/local/sbin\:/usr/local/bin\:/usr/sbin\:/usr/bin\:/sbin\:/bin\:/snap/bin
+
+          User catalog may run the following commands on ip-172-26-14-7.ec2.internal:
+          (ALL : ALL) ALL
+       ```
+   - Run `createdb catalog` to create a new database
+   - Run `psql` and `\l` to confirm the database was created.
+   - Run `exit` to switch back to `ubuntu` user.
+7. Install git
+   - Run `sudo apt-get install git`
+   
+#### Step 6: Deploy the Item Catalog Project
+1. Create a new itemCatalog directory in /var/www/ by running `cd /var/www/` and then `sudo mkdir itemCatalog`. 
+2. Change to the itemCatalog directory (`cd itemCatalog`) and clone the item catalog project:
+   `sudo git clone https://github.com/DespoinaSakoglou/Item-Catalog-Project.git itemCatalog`
+3. Change back to /var/www/ (`cd ..`) and run `sudo chown -R ubuntu:ubuntu itemCatalog/` to change the ownership of the itemCatalog directory to `ubuntu`
     
     
 
