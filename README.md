@@ -171,8 +171,9 @@ This is a baseline installation of a Linux server configured as a web and databa
      This way you can switch the database in the database_setup.py file from SQLite to PostgreSQL. (make sure to use the password you set for the PostgreSql catalog user, not the database catalog user - in case two different passwords were set)
 2. Add client_secrets.json to authenticate login with Google
    - Create a new project on the [Google APIs Console](https://console.developers.google.com/apis)
-   - Choose **Credentials** on the left and create an **OAuth Client ID**. Configure the **consent screen** with an application name and support email, save and select **Web application** from the list of application types.
+   - Choose **Credentials** on the left and create an **OAuth Client ID**. Configure the **consent screen** with an application name and support email, and add 'xip.io' and 'xip.io.compute-1.amazonaws.com' in the authorized domains section. Save and select **Web application** from the list of application types.
    - Add http://XX.XX.XX.XX and http://ec2-XX-XX-XX-XX.compute-1.amazonaws.com as authorized JavaScript origins
+   - Add http://XX.XX.XX.XX.xip.io/login, http://XX.XX.XX.XX.xip.io/gconnect, http://XX.XX.XX.XX.xip.io/oauth2callback, http://ec2-XX-XX-XX-XX.xip.io.compute-1.amazonaws.com/login, http://ec2-XX-XX-XX-XX.xip.io.compute-1.amazonaws.com/gconnect, and http://ec2-XX-XX-XX-XX.xip.io.compute-1.amazonaws.com/oauth2callback as authorized redirect URIs
    - Google will provide a client ID and client secret for the project, accecible via a downloadable JSON file. Download the JSON file, and copy the contents in order to update the client_secrets.json file
    - Run `nano client_secrets.json` in the /var/www/itemCatalog/itemCatalog/ directory to open the client_secrets.json file
    - Delete the existing contents and paste the new contents that you copied from the downloaded JSON file. Save and close client_secrets.json file.
