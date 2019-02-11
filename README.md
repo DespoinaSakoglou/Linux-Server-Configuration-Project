@@ -5,13 +5,26 @@ This project describes a Linux server configuration process as part of the Udaci
 This is a baseline installation of a Linux server configured as a web and database server to host a web application. The instructions below explain how to configure the server to host the [Item Catalog app](https://github.com/DespoinaSakoglou/Item-Catalog-Project) on an Amazon Lightsail instance.
 
 ### Server Specific Details
-- IP address: 
+- IP address: 3.91.174.203
 
 - SSH port: 2200
 
-- URL to the hosted website: 
+- URL to the hosted website: http://3.91.174.203 or http://ec2-3-91-174-203.compute-1.amazonaws.com/
 
 ### Software installed during configuration
+1. Apache2
+2. mod_wsgi
+3. PostgreSQL
+4. git
+5. pip
+6. virtualenv
+7. httplib2
+8. requests
+9. Flask
+10. SQLAlchemy
+11. oauth2client
+12. libpq-dev
+13. psycopg2
 
 ### Configuration process
 
@@ -227,7 +240,7 @@ This is a baseline installation of a Linux server configured as a web and databa
    - Open the file by running `sudo nano itemCatalog.wsgi` and add the following:
      ```
         activate_this = '/var/www/itemCatalog/itemCatalog/venv/bin/activate_this.py'
-        execfile(activate_this, dict(__file__=activate_this))
+        exec(open(activate_this)read())
 
         #!/usr/bin/python
         import sys
@@ -236,8 +249,9 @@ This is a baseline installation of a Linux server configured as a web and databa
         sys.path.insert(0,"/var/www/itemCatalog/")
 
         from itemCatalog import app as application
-        application.secret_key = '12345'
+        application.secret_key = 'super_secret_key'
      ```
+     Note that the 'super_secret_key' in last line: `application.secret_key = 'super_secret_key'` is the secret key used in `__init__.py` on line 380: `app.secret_key = 'super_secret_key'`
    - Resart Apache: run `sudo service apache2 restart`
 6. Switch the database in the application from SQLite to PostgreSQL
    - Change to the /var/www/itemCatalog/itemCatalog directory.
@@ -256,7 +270,26 @@ This is a baseline installation of a Linux server configured as a web and databa
            service apache2 reload
      ```
    - Run `sudo service apache2 reload`
-8. 
-    
-    
+8. Set up the database schema and populate the database
+   - In the /var/www/itemCatalog/itemCatalog/ directory, run `. venv/bin/activate` to activate the virtual environment
+   - Run `python hikingitems.py` to populate the database with data
+   - Run `deactivate` to deactivate the virtual environment
+   - Resart Apache: run `sudo service apache2 restart`
+   - In your preferred browser, go to http://XX.XX.XX.XX or http://ec2-XX-XX-XX-XX.compute-1.amazonaws.com to make sure the app is working. The application should be up and running.
+   
+### Troubleshooting
 
+If you go to http://XX.XX.XX.XX or http://ec2-XX-XX-XX-XX.compute-1.amazonaws.com and get an **Internal Server Error**, go to the terminal and in the /var/log/apache2/ directory run `nano error.log` to see the specific error. If the error is: `ImportError: No module named flask` or any other module, you need to `cd /var/www/itemCatalog/itemCatalog` and run the following:
+
+- `sudo -H pip install Flask`
+- `sudo -H pip install sqlalchemy`
+- `sudo -H pip install requests`
+- `sudo -H pip install oauth2client`
+- `sudo -H pip install psycopg2`
+- Make sure to run `sudo service apache2 restart` to restart Apache after each installation.
+
+### Resources to complete the project
+- Udacity course: [Configuring Linux Web Servers](https://www.udacity.com/course/configuring-linux-web-servers--ud299)
+- Udacity course: [Linux Command Line Basics](https://www.udacity.com/course/linux-command-line-basics--ud595)
+- Digital Ocean: [How To Deploy a Flask Application on an Ubuntu VPS](https://www.digitalocean.com/community/tutorials/how-to-deploy-a-flask-application-on-an-ubuntu-vps) tutorial
+- [Linux Bible](https://udaygade.files.wordpress.com/2015/04/linux-bible-by-christopher-negus.pdf) by Christopher Negus
