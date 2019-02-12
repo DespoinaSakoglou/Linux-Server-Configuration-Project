@@ -49,6 +49,13 @@ This is a baseline installation of a Linux server configured as a web and databa
 
 #### Step 3: Secure the server
 1. Update all currently installed packages by running `sudo apt-get update` and then `sudo apt-get upgrade`.
+   *_Note_*: if after running the above commands, you get a message that `The following packages have been kept back`, similar to the following:
+   ```
+      The following packages have been kept back:
+      open-vm-tools ubuntu-minimal
+      0 upgraded, 0 newly installed, 0 to remove and 2 not upgraded.
+   ```
+   then you need to run: `sudo apt-get update && sudo apt-get dist-upgrade`. This is because `apt-get dist-upgrade` allows you to install new packages when needed (ie, a new kernel version) while `apt-get upgrade` won't install packages kept back because by default it does not try to install new packages.
 2. Configure the firewall:
    - Change the SSH port from 22 to 2200: `sudo nano /etc/ssh/sshd_config` and change the port number on line 5 from 22 to 2200.
    - Restart SSH by running `sudo service ssh restart`.
