@@ -45,6 +45,7 @@ This is a baseline installation of a Linux server configured as a web and databa
 6. Run `chmod 600 ~/.ssh/lightsail_key.rsa`.
 7. Log in by running `ssh -i ~/.ssh/lightrail_key.rsa ubuntu@XX.XX.XX.XX`, where XX.XX.XX.XX is the public IP address of the instance.
 8. When you SSH in, you'll be logged as the ubuntu user. When you want to execute commands as root, you'll need to use the sudo command to do it.
+9. To not be able to login as root remotely, run `sudo nano /etc/ssh/sshd_config`. Find line 28: `PermitRootLogin prohibit-password` and change option 'prohibit-password' to 'no'. Save and close the file.
 
 #### Step 3: Secure the server
 1. Update all currently installed packages by running `sudo apt-get update` and then `sudo apt-get upgrade`.
